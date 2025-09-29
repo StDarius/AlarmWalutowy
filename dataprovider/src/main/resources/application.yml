@@ -2,37 +2,43 @@
 # DEFAULT PROFILE: dev
 # - H2 in-memory
 # - inMemory messaging (no RabbitMQ needed)
-# - Mail (optional) -> MailHog on localhost:1025
+# - Mail -> MailHog on localhost:1025
 # =========================
 spring:
   application:
     name: dataprovider
+
   datasource:
     url: jdbc:h2:mem:currencydb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
     driver-class-name: org.h2.Driver
     username: sa
     password:
+
   jpa:
     hibernate:
-      ddl-auto: none          # use Flyway to manage schema
+      ddl-auto: none
     properties:
       hibernate:
         format_sql: true
     open-in-view: true
+
   flyway:
     enabled: true
     locations: classpath:db/migration
-  # RabbitMQ is NOT used in dev when app.messaging.inMemory=true
-  # spring.rabbitmq can stay, but it won't be used by consumers in this profile
+
+  # RabbitMQ is NOT used in dev because app.messaging.inMemory=true
   rabbitmq:
     host: localhost
     port: 5672
     username: guest
     password: guest
-  # DEV mail via MailHog (optional). If you don't run MailHog, you can remove this block.
+    listener:
+      simple:
+        auto-startup: false
+
   mail:
     host: localhost
-    port: 1025
+    port: 1025                  # MailHog SMTP
     properties:
       mail.smtp.auth: false
       mail.smtp.starttls.enable: false
@@ -42,45 +48,62 @@ server:
 
 app:
   jwt:
-    # >= 256-bit Base64 secret (your value is OK)
+    # >= 256-bit Base64 secret (keep yours or rotate)
     secret: ASNFZ4mrze8BI0VniavN7wEjRWeJq83vASNFZ4mrze8=
     expirationMs: 7200000
   messaging:
-    inMemory: true      # <-- IMPORTANT for dev: no Rabbit required
+    inMemory: true
+  notifications:
+    enabled: true               # allow sending emails in dev
+    from: no-reply@alarm-walutowy.local
 
 ---
 # =========================
 # PROD PROFILE
 # - Postgres + RabbitMQ
+# - Mail -> MailHog (or swap to real SMTP)
 # =========================
 spring:
   config:
     activate:
       on-profile: prod
+
   datasource:
     url: jdbc:postgresql://localhost:5432/currencydb
     username: app
     password: app
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: none
+
   flyway:
     enabled: true
     locations: classpath:db/migration
+
   rabbitmq:
     host: localhost
     port: 5672
     username: guest
     password: guest
+    listener:
+      simple:
+        auto-startup: true      # start consumers in prod
 
   mail:
-    host: localhost
+    host: localhost             # change to real SMTP in prod if needed
     port: 1025
     properties:
       mail.smtp.auth: false
       mail.smtp.starttls.enable: false
 
+server:
+  port: 8080
+
 app:
   messaging:
     inMemory: false
+  notifications:
+    enabled: true
+    from: no-reply@alarm-walutowy.local
