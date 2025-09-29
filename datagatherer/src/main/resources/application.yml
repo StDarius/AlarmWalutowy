@@ -1,0 +1,20 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: datagatherer
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+app:
+  base: USD
+  changeThresholdPercent: 0.0
+  provider:
+    mock: true
+  messaging:
+    inMemory: false
+  pollFixedRateMs: 5000  # poll every 5s

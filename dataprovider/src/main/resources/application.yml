@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: dataprovider
+  datasource:
+    url: jdbc:h2:mem:currencydb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  mail:
+    host: smtp.mailtrap.io
+    port: 2525
+    username:
+    password:
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: ASNFZ4mrze8BI0VniavN7wEjRWeJq83vASNFZ4mrze8=
+    expirationMs: 7200000
+  messaging:
+    inMemory: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:postgresql://localhost:5432/currencydb
+    username: app
+    password: app
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  messaging:
+    inMemory: false
