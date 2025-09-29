@@ -1,45 +1,58 @@
+# =========================
+# DEFAULT PROFILE: dev
+# - H2 in-memory
+# - inMemory messaging (no RabbitMQ needed)
+# - Mail (optional) -> MailHog on localhost:1025
+# =========================
 spring:
   application:
     name: dataprovider
   datasource:
-    url: jdbc:h2:mem:currencydb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    url: jdbc:h2:mem:currencydb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    driver-class-name: org.h2.Driver
     username: sa
     password:
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none          # use Flyway to manage schema
     properties:
       hibernate:
         format_sql: true
     open-in-view: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  # RabbitMQ is NOT used in dev when app.messaging.inMemory=true
+  # spring.rabbitmq can stay, but it won't be used by consumers in this profile
   rabbitmq:
     host: localhost
     port: 5672
     username: guest
     password: guest
+  # DEV mail via MailHog (optional). If you don't run MailHog, you can remove this block.
   mail:
-    host: smtp.mailtrap.io
-    port: 2525
-    username:
-    password:
+    host: localhost
+    port: 1025
     properties:
-      mail.smtp.auth: true
-      mail.smtp.starttls.enable: true
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
 
 server:
   port: 8080
 
 app:
   jwt:
+    # >= 256-bit Base64 secret (your value is OK)
     secret: ASNFZ4mrze8BI0VniavN7wEjRWeJq83vASNFZ4mrze8=
     expirationMs: 7200000
   messaging:
-    inMemory: false
+    inMemory: true      # <-- IMPORTANT for dev: no Rabbit required
 
 ---
+# =========================
+# PROD PROFILE
+# - Postgres + RabbitMQ
+# =========================
 spring:
   config:
     activate:
@@ -48,17 +61,25 @@ spring:
     url: jdbc:postgresql://localhost:5432/currencydb
     username: app
     password: app
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
   rabbitmq:
     host: localhost
     port: 5672
     username: guest
     password: guest
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
+
+  mail:
+    host: localhost
+    port: 1025
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
 
 app:
   messaging:

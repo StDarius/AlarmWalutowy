@@ -12,4 +12,6 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     List<Subscription> findByUserUsername(String username);
 
     List<Subscription> findByCurrency(String currency);
+
+    List<Subscription> findByUserId(Long id);
 }
