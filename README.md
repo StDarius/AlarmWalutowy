@@ -1,83 +1,77 @@
-# 📈 Alarm Walutowy – v1.3
+README – AlarmWalutowy v1.4
+🎯 Opis projektu
 
-Aplikacja **Alarm Walutowy** to projekt stworzony w Spring Boot, który pozwala użytkownikom zakładać subskrypcje na wybrane pary walutowe i otrzymywać powiadomienia e-mail w przypadku przekroczenia określonych progów procentowych zmiany kursu.
+AlarmWalutowy to aplikacja, której celem jest monitorowanie kursów walut i powiadamianie użytkowników, gdy zmiana przekroczy zdefiniowany próg procentowy.
+Projekt łączy się z zewnętrznym API kursów walut, umożliwia zakładanie kont, subskrypcję wybranych par walutowych oraz wysyła powiadomienia e-mail.
 
-## ✨ Nowości w wersji 1.3
-- ✅ Dodanie **DTO (Data Transfer Objects)** w warstwie API:
-    - Dane zwracane do użytkownika są teraz ograniczone tylko do potrzebnych pól (np. brak haseł i informacji wewnętrznych).
-    - Większe bezpieczeństwo oraz czytelniejszy JSON w odpowiedziach API.
-- ✅ Refaktoryzacja kontrolerów (`AuthController`, `UserController`, `SubscriptionController`) do korzystania z DTO.
-- ✅ Lepsza separacja logiki: Encje służą wyłącznie do mapowania bazy danych, a DTO do komunikacji z klientem.
-- ✅ Drobne poprawki w testach oraz konfiguracji aplikacji.
+Od wersji 1.4 dodano role użytkowników (ROLE_USER, ROLE_ADMIN), co wprowadza prostą warstwę autoryzacji – np. różne poziomy dostępu do endpointów.
 
----
+🛠 Technologie
 
-## 🛠 Technologie
-- Java 21
-- Spring Boot 3.3.4
-- Spring Data JPA (Hibernate)
-- Spring Security (JWT)
-- Flyway (migracje bazy danych)
-- H2 (profil dev) / PostgreSQL (profil prod)
-- MailHog (testowanie powiadomień e-mail)
-- Maven
+Java 21, Spring Boot 3.3
 
----
+Spring Security + JWT
 
-## 📊 Baza danych
-- **Dev** – H2 (in-memory, profil `dev`)
-- **Prod** – PostgreSQL (profil `prod`)
-- Schemat tworzony i aktualizowany przez **Flyway**.
-- Relacje:
-    - `User` ↔ `Subscription` (OneToMany)
-    - W pełni znormalizowana struktura (brak redundancji).
+Spring Data JPA + H2 (dev), PostgreSQL (prod)
 
----
+Flyway (zarządzanie schematem bazy)
 
-## 🚀 Uruchamianie
-### Wymagania
-- Java 21
-- Maven 3.9+
-- (opcjonalnie dla `prod`) PostgreSQL + RabbitMQ
+MailHog (powiadomienia e-mail w dev)
 
-### Kroki (profil `dev`)
-1. Uruchom MailHog:
-   ```bash
-   mailhog
-Interfejs: http://localhost:8025
+Lombok (redukcja boilerplate)
 
-Zbuduj projekt:
+Docker (opcjonalnie)
 
-mvn clean install
+🚀 Funkcjonalności
 
-Uruchom moduł dataprovider:
+Rejestracja i logowanie z JWT, walidacja danych
 
-mvn spring-boot:run -pl dataprovider -Dspring-boot.run.profiles=dev
+Subskrypcja wybranych walut z progami alertów
 
-API dostępne pod:
-http://localhost:8080/swagger-ui/index.html
+Powiadomienia mailowe (MailHog w dev)
 
-🔑 Funkcjonalności
-#Rejestracja i logowanie użytkowników (JWT).
-#Tworzenie i usuwanie subskrypcji walutowych.
-#Automatyczne sprawdzanie kursów walut i wysyłanie powiadomień e-mail.
-#Bezpieczne API oparte na DTO.
+Integracja z zewnętrznym API kursów walut
 
-🧪 Testowanie maili
-Wszystkie powiadomienia e-mail są wysyłane do MailHog (port 1025).
+Obsługa ról użytkowników:
 
-Możesz je podejrzeć w interfejsie webowym:
-http://localhost:8025
+ROLE_USER – dostęp do standardowych funkcji aplikacji
 
-📌 Plany na wersję 1.4
-Dodanie panelu frontendowego (React/Angular).
+ROLE_ADMIN – potencjalny dostęp do funkcji administracyjnych
 
-Wdrożenie aplikacji w chmurze (np. VPS/Heroku).
+📊 Priorytety funkcjonalności (MoSCoW) + Estymaty
+Kategoria	Funkcjonalność	Estymata (h)	Status v1.4
+M	Rejestracja i logowanie z JWT	8	✅ Gotowe
+M	Subskrypcje walut z progami alertów	12	✅ Gotowe
+M	Powiadomienia e-mail (MailHog w dev)	6	✅ Gotowe
+M	Integracja z zewnętrznym API (kursy walut)	10	✅ Gotowe
+M	Role użytkowników (USER/ADMIN)	8	✅ Gotowe
+S	Historia kursów walut + DTO	8	✅ Gotowe
+S	Panel statusu API (/api/status)	3	✅ Gotowe
+C	Dashboard w React/Thymeleaf	16	❌ Jeszcze nie
+W	Integracja z Google OAuth	-	❌ Nie w tej wersji
+W	Deploy na VPS z CI/CD	-	❌ Nie w tej wersji
+🔑 Zmiany w wersji 1.4
 
-Dodanie cache dla wyników kursów.
+Dodano obsługę ról użytkowników (ROLE_USER, ROLE_ADMIN) w modelu i serwisach.
 
-Rozszerzenie testów integracyjnych o symulację kursów.
+Rozszerzono logikę rejestracji o przypisywanie domyślnej roli.
 
-👤 Autor
-Projekt stworzony jako część ścieżki rozwoju Java Developera szkoły Coderslab.
-Wersja 1.3 stanowi stabilne wydanie z pełnym wsparciem DTO oraz poprawioną strukturą API.
+Zaktualizowano dokumentację README o sekcję MoSCoW + Estymaty.
+
+📦 Uruchamianie
+Profil deweloperski
+
+Wymagane: Java 21, Maven, opcjonalnie Docker + MailHog
+
+Komenda:
+
+mvn spring-boot:run -pl dataprovider
+
+
+Aplikacja dostępna pod adresem: http://localhost:8080
+
+Profil produkcyjny
+
+Wymagane: PostgreSQL + RabbitMQ
+
+Konfiguracja w application.yml (prod).

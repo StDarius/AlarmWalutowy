@@ -11,6 +11,17 @@ import lombok.Getter;
 @Table(name = "users")
 public class User {
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private java.util.Set<Role> roles = new java.util.HashSet<>();
+
+    public void addRole(Role role) { this.roles.add(role); }
+
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -26,6 +37,8 @@ public class User {
     @Column(length = 200)
     private String email;
 
+
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getUsername() { return username; }
@@ -34,4 +47,5 @@ public class User {
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
 }
