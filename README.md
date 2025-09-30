@@ -1,137 +1,161 @@
-# Alarm Walutowy — v1.4.1
+# README – AlarmWalutowy v1.4.1 🎯
 
-Aplikacja mikroserwisowa do monitorowania kursów walut i wysyłania powiadomień użytkownikom, gdy przekroczone zostaną zdefiniowane progi.  
-Projekt zrealizowany w ramach **finałowego projektu bootcampu Java (CodersLab)**.
+## 📌 Opis projektu
 
----
+**AlarmWalutowy** to aplikacja służąca do monitorowania kursów walut i powiadamiania użytkowników, gdy zmiana przekroczy zdefiniowany próg procentowy.  
+System umożliwia:
+- zakładanie kont użytkowników i logowanie (JWT),
+- subskrypcję wybranych par walutowych,
+- wysyłkę powiadomień e-mail (MailHog w trybie dev),
+- zarządzanie dostępem przez role (`ROLE_USER`, `ROLE_ADMIN`).
 
-## ✨ Funkcjonalności
-
-- **Zarządzanie użytkownikami**
-    - Rejestracja z adresem e-mail i hasłem
-    - Role systemowe (`ROLE_USER`)
-    - Uwierzytelnianie oparte o JWT
-
-- **Subskrypcje**
-    - Użytkownik może zapisać się na pary walut (np. EUR/USD)
-    - Definiowanie progów procentowych zmian, które uruchamiają powiadomienia
-
-- **Powiadomienia**
-    - E-maile wysyłane przy przekroczeniu progów
-    - Możliwość włączenia/wyłączenia powiadomień w konfiguracji
-
-- **Zbieranie danych**
-    - Pobieranie kursów walut z zewnętrznego dostawcy
-    - Publikacja zdarzeń kursowych (RateTick)
-
-- **Dostawca danych**
-    - REST API dla użytkowników, uwierzytelniania, subskrypcji i alertów
-    - Integracja z Spring Security, JPA i Mail
-    - Mapowanie encji na DTO
+### 🆕 Zmiany w wersji 1.4.1
+- Uporządkowano encje (`User`, `Role`, `RateTick`) i DTO (`RateTickDTO`, `UserDTO`, `SubscriptionDTO`).
+- Poprawiono **AuthService** i **AuthController** (czystsza obsługa JWT + logowanie).
+- Dodano logger (`@Slf4j`) w `NotificationService` i pełną obsługę MailHog.
+- Stabilniejsze mapowanie obiektów dzięki klasie `Mappers`.
+- README zaktualizowane o pełne instrukcje uruchamiania i integracji z MailHog.
 
 ---
 
-## 🏗️ Struktura projektu
+## 🛠 Technologie
 
-Projekt jest **wielomodułowy (Maven multi-module)**:
-
-- **currency-alert** – moduł nadrzędny (root)
-- **common** – wspólne DTO, mapery, klasy pomocnicze
-- **datagatherer** – pobiera kursy z zewnętrznych API i publikuje zdarzenia
-- **dataprovider** – warstwa REST API, uwierzytelnianie, subskrypcje, powiadomienia
-
----
-
-## ⚙️ Stos technologiczny
-
-- **Java 21 (LTS)**
-- **Spring Boot 3.3**
-    - Spring Web (REST API)
-    - Spring Security (JWT)
-    - Spring Data JPA (Hibernate + H2/MySQL)
-    - Spring Mail (JavaMailSender)
-- **Maven 3.9+**
-- **Lombok**
-- **JUnit 5** i **Mockito**
-- **H2** (testy/dev), **MySQL** (produkcja)
+- **Java 21**, **Spring Boot 3.3**
+- **Spring Security + JWT**
+- **Spring Data JPA**
+    - H2 (dev/test)
+    - PostgreSQL (prod)
+- **Flyway** – migracje bazy
+- **MailHog** – testowe powiadomienia e-mail
+- **Lombok** – redukcja boilerplate
+- **Docker** (opcjonalnie, np. dla MailHog, bazy)
+- **JUnit 5 + Mockito** – testy jednostkowe/integracyjne
 
 ---
 
-## 🚀 Uruchomienie
+## 🚀 Funkcjonalności
 
-### Wymagania
+- Rejestracja i logowanie (JWT, walidacja danych).
+- Subskrypcja wybranych walut z progami alertów.
+- Powiadomienia e-mail (MailHog w dev).
+- Integracja z zewnętrznym API kursów walut.
+- Obsługa ról użytkowników:
+    - `ROLE_USER` – dostęp do standardowych funkcji aplikacji.
+    - `ROLE_ADMIN` – dostęp administracyjny (np. zarządzanie użytkownikami w przyszłych wersjach).
 
-- Zainstalowana JDK **21**
-- Maven **3.9+**
-- (opcjonalnie) serwer SMTP lub Mailtrap do testowania e-maili
+---
 
-### Klonowanie i budowanie
-```bash
-git clone https://github.com/twoj-login/alarm-walutowy.git
-cd alarm-walutowy
-mvn clean package
-Uruchomienie lokalne
-W module dataprovider:
+## 📊 Priorytety funkcjonalności (MoSCoW) + Estymaty
+
+| Kategoria | Funkcjonalność                            | Estymata (h) | Status v1.4.1 |
+|-----------|--------------------------------------------|--------------|---------------|
+| M         | Rejestracja i logowanie z JWT              | 8            | ✅ Gotowe     |
+| M         | Subskrypcje walut z progami alertów        | 12           | ✅ Gotowe     |
+| M         | Powiadomienia e-mail (MailHog w dev)       | 6            | ✅ Gotowe     |
+| M         | Integracja z zewnętrznym API (kursy walut) | 10           | ✅ Gotowe     |
+| M         | Role użytkowników (USER/ADMIN)             | 8            | ✅ Gotowe     |
+| S         | Historia kursów walut + DTO                | 8            | ✅ Gotowe     |
+| S         | Panel statusu API (`/api/status`)          | 3            | ✅ Gotowe     |
+| C         | Dashboard w React/Thymeleaf                | 16           | ❌ Jeszcze nie|
+| W         | Integracja z Google OAuth                  | -            | ❌ Nie w tej wersji |
+| W         | Deploy na VPS z CI/CD                      | -            | ❌ Nie w tej wersji |
+
+---
+
+## 📦 Uruchamianie
+
+### Profil deweloperski
+
+**Wymagane:**
+- Java 21
+- Maven
+- Docker (dla MailHog i bazy testowej, opcjonalnie)
+
+1. Uruchom MailHog:
+   ```bash
+   docker run --rm -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
+SMTP: localhost:1025
+
+UI MailHog: 👉 http://localhost:8025
+
+Skonfiguruj aplikację (application.yml):
+
+yaml
+Skopiuj kod
+spring:
+mail:
+host: localhost
+port: 1025
+properties:
+mail:
+smtp:
+auth: false
+starttls:
+enable: false
+
+app:
+notifications:
+enabled: true
+from: no-reply@alarm-walutowy.local
 
 
-mvn spring-boot:run
-Lub uruchom klasę DataProviderApplication w IntelliJ.
-API dostępne pod adresem:
-👉 http://localhost:8080/api
+Uruchom moduł dataprovider:
 
-🔑 Przebieg autoryzacji
+mvn spring-boot:run -pl dataprovider
+Aplikacja dostępna pod adresem:
+👉 http://localhost:8080
+
+Profil produkcyjny
+Wymagane:
+
+PostgreSQL
+
+RabbitMQ (dla kolejek zdarzeń walutowych)
+
+Konfiguracja w application.yml (prod profile).
+Budowanie:
+
+bash
+Skopiuj kod
+mvn clean package -DskipTests
+🔑 API – przykłady
 Rejestracja
 POST /api/auth/register
-Przykładowe body:
 
 
 {
-  "username": "jan",
-  "password": "tajne123",
-  "email": "jan@example.com"
+"username": "jan",
+"password": "tajne123",
+"email": "jan@example.com"
 }
 Logowanie
 POST /api/auth/login
-Przykładowe body:
 
 
 {
-  "username": "jan",
-  "password": "tajne123"
+"username": "jan",
+"password": "tajne123"
 }
 Odpowiedź:
 
 
 {
-  "token": "<jwt-token>",
-  "user": { "id": 1, "username": "jan", "email": "jan@example.com" }
+"token": "<jwt-token>",
+"user": { "id": 1, "username": "jan", "email": "jan@example.com" }
 }
-Token JWT należy przekazywać w nagłówku Authorization:
 
+JWT należy przekazywać w nagłówku:
+
+makefile
 
 Authorization: Bearer <jwt-token>
-📧 Powiadomienia e-mail
-Włączanie/wyłączanie: app.notifications.enabled (true/false)
-
-Nadawca: app.notifications.from
-
-Przykład (application.yml):
-
-
-app:
-  notifications:
-    enabled: true
-    from: no-reply@alarm-walutowy.local
 🧪 Testy
-Uruchomienie testów:
-
+Uruchamianie testów:
 
 mvn test
-Testy obejmują:
 
-jednostkowe (AuthService, UserService, NotificationService)
-
-integracyjne (API, rejestracja/logowanie)
+Testy jednostkowe (AuthService, UserService, NotificationService)
+Testy integracyjne (API rejestracji i logowania)
 
 📄 Wersja
 Aktualne wydanie: 1.4.1
