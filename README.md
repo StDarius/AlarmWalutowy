@@ -80,7 +80,6 @@ UI MailHog: 👉 http://localhost:8025
 
 Skonfiguruj aplikację (application.yml):
 
-yaml
 Skopiuj kod
 spring:
 mail:
@@ -115,7 +114,6 @@ RabbitMQ (dla kolejek zdarzeń walutowych)
 Konfiguracja w application.yml (prod profile).
 Budowanie:
 
-bash
 Skopiuj kod
 mvn clean package -DskipTests
 🔑 API – przykłady
