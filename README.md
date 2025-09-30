@@ -1,92 +1,83 @@
-# 💱 Alarm Walutowy – System Powiadomień o Kursach Walut
+# 📈 Alarm Walutowy – v1.3
 
-**Alarm Walutowy** to projekt oparty na **Spring Boot**, którego celem jest śledzenie kursów walut i powiadamianie użytkowników, gdy skonfigurowane progi zostaną przekroczone.  
-Projekt pokazuje integrację **bazy danych, systemu wiadomości, bezpieczeństwa oraz powiadomień mailowych** w modularnej aplikacji Java.
+Aplikacja **Alarm Walutowy** to projekt stworzony w Spring Boot, który pozwala użytkownikom zakładać subskrypcje na wybrane pary walutowe i otrzymywać powiadomienia e-mail w przypadku przekroczenia określonych progów procentowych zmiany kursu.
 
----
-
-## 📌 Funkcjonalności
-
-- **Logowanie i autoryzacja JWT**
-- **CRUD dla Subskrypcji** (waluta + próg procentowy)
-- **Pobieranie aktualizacji kursów** (RabbitMQ lub pamięć in-memory w trybie dev)
-- **Historia kursów** (zapisywanie 50 ostatnich próbek)
-- **Monitorowanie progów**: uruchamianie alertów po przekroczeniu ustawionej wartości
-- **Powiadomienia mailowe (v1.2)** – obsługiwane przez [MailHog](https://github.com/mailhog/MailHog) w trybie deweloperskim
-- Dokumentacja API przez Swagger UI (`/swagger-ui.html`)
+## ✨ Nowości w wersji 1.3
+- ✅ Dodanie **DTO (Data Transfer Objects)** w warstwie API:
+    - Dane zwracane do użytkownika są teraz ograniczone tylko do potrzebnych pól (np. brak haseł i informacji wewnętrznych).
+    - Większe bezpieczeństwo oraz czytelniejszy JSON w odpowiedziach API.
+- ✅ Refaktoryzacja kontrolerów (`AuthController`, `UserController`, `SubscriptionController`) do korzystania z DTO.
+- ✅ Lepsza separacja logiki: Encje służą wyłącznie do mapowania bazy danych, a DTO do komunikacji z klientem.
+- ✅ Drobne poprawki w testach oraz konfiguracji aplikacji.
 
 ---
 
-## 🗂️ Moduły
-
-- `dataprovider` – REST API, baza danych, bezpieczeństwo, messaging, serwis powiadomień
-- `datagatherer` – symuluje pobieranie kursów walut i publikowanie zdarzeń
-- `common` – klasy wspólne (DTO, zdarzenia, konfiguracja)
-
----
-
-## ⚙️ Technologie
-
-- **Java 17**, **Spring Boot 3**
-- **Spring Data JPA + Flyway** (H2 w dev, PostgreSQL w prod)
-- **Spring Security + JWT**
-- **RabbitMQ** (opcjonalnie, wyłączone w dev)
-- **MailHog SMTP** (testowanie maili w dev)
-- **Maven**
-- **Swagger / OpenAPI**
+## 🛠 Technologie
+- Java 21
+- Spring Boot 3.3.4
+- Spring Data JPA (Hibernate)
+- Spring Security (JWT)
+- Flyway (migracje bazy danych)
+- H2 (profil dev) / PostgreSQL (profil prod)
+- MailHog (testowanie powiadomień e-mail)
+- Maven
 
 ---
 
-## 🚀 Uruchomienie w trybie dev
+## 📊 Baza danych
+- **Dev** – H2 (in-memory, profil `dev`)
+- **Prod** – PostgreSQL (profil `prod`)
+- Schemat tworzony i aktualizowany przez **Flyway**.
+- Relacje:
+    - `User` ↔ `Subscription` (OneToMany)
+    - W pełni znormalizowana struktura (brak redundancji).
 
-1. Uruchom **MailHog** (SMTP `1025`, panel pod `8025`):
+---
 
-   docker run --rm -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
+## 🚀 Uruchamianie
+### Wymagania
+- Java 21
+- Maven 3.9+
+- (opcjonalnie dla `prod`) PostgreSQL + RabbitMQ
 
-2.Uruchom aplikację (dataprovider):
+### Kroki (profil `dev`)
+1. Uruchom MailHog:
+   ```bash
+   mailhog
+Interfejs: http://localhost:8025
 
-mvn spring-boot:run -pl dataprovider
+Zbuduj projekt:
 
-3. Wejdź na:
+mvn clean install
 
-Swagger UI → http://localhost:8080/swagger-ui.html
-MailHog inbox → http://localhost:8025
+Uruchom moduł dataprovider:
 
-📧 Testowanie maili (v1.2)
-Dodano specjalny endpoint debugowy, który pozwala ręcznie wysłać przykładowy mail:
+mvn spring-boot:run -pl dataprovider -Dspring-boot.run.profiles=dev
 
-POST /api/debug/mail
+API dostępne pod:
+http://localhost:8080/swagger-ui/index.html
 
-Authorization: Bearer <twój_token>
-Efekt: wysyłane jest testowe powiadomienie o przekroczeniu progu.
-Mail pojawi się w MailHog UI.
+🔑 Funkcjonalności
+#Rejestracja i logowanie użytkowników (JWT).
+#Tworzenie i usuwanie subskrypcji walutowych.
+#Automatyczne sprawdzanie kursów walut i wysyłanie powiadomień e-mail.
+#Bezpieczne API oparte na DTO.
 
-🛠️ Profile aplikacji
+🧪 Testowanie maili
+Wszystkie powiadomienia e-mail są wysyłane do MailHog (port 1025).
 
-dev (domyślny):
+Możesz je podejrzeć w interfejsie webowym:
+http://localhost:8025
 
-Baza H2 (in-memory)
-Messaging w pamięci (bez RabbitMQ)
-Powiadomienia mailowe → MailHog
+📌 Plany na wersję 1.4
+Dodanie panelu frontendowego (React/Angular).
 
-prod:
+Wdrożenie aplikacji w chmurze (np. VPS/Heroku).
 
-PostgreSQL
-RabbitMQ
-Zewnętrzny serwer SMTP (konfigurowalny)
+Dodanie cache dla wyników kursów.
 
-📜 Changelog
-v1.0 – Szkielet aplikacji (dataprovider, datagatherer, common)
+Rozszerzenie testów integracyjnych o symulację kursów.
 
-v1.1 – CRUD, JWT, Swagger UI, testy integracyjne
-
-v1.2 – Powiadomienia mailowe z MailHog, NotificationService, endpoint debugowy do testów
-
-🧑‍💻 Kolejne kroki
-Dodanie DTO do zwracanych odpowiedzi API
-
-Wdrożenie na VPS (Docker Compose)
-
-Dodanie CI/CD (np. GitHub Actions)
-
-Obsługa zewnętrznego SMTP w środowisku produkcyjnym
+👤 Autor
+Projekt stworzony jako część ścieżki rozwoju Java Developera szkoły Coderslab.
+Wersja 1.3 stanowi stabilne wydanie z pełnym wsparciem DTO oraz poprawioną strukturą API.
