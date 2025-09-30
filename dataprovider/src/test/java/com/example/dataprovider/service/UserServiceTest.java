@@ -21,22 +21,33 @@ import static org.mockito.Mockito.when;
 class UserServiceTest {
 
     @Mock UserRepository userRepository;
-    @Mock RoleRepository roleRepository;        // <-- add this
+    @Mock RoleRepository roleRepository;
     @Mock PasswordEncoder passwordEncoder;
 
-    @InjectMocks UserService userService;       // <-- Mockito will use the 3-arg ctor
+    @InjectMocks UserService userService;
 
     @Test
     void registerAssignsUserRole() {
+        // arrange
         when(userRepository.existsByUsername("alice")).thenReturn(false);
         when(passwordEncoder.encode("pw")).thenReturn("HASH");
-        var role = new Role(); role.setName("USER");
-        when(roleRepository.findByName("USER")).thenReturn(Optional.of(role));
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
+        var role = new Role();
+        role.setName("ROLE_USER"); // <-- with prefix
+
+        when(roleRepository.findByName("ROLE_USER"))
+                .thenReturn(Optional.of(role));
+
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        // act
         var u = userService.register("alice", "pw", "a@b.c");
 
+        // assert
         assertThat(u.getPasswordHash()).isEqualTo("HASH");
-        assertThat(u.getRoles()).extracting(Role::getName).contains("USER");
+        assertThat(u.getRoles())
+                .extracting(Role::getName)
+                .contains("ROLE_USER"); // <-- expect prefixed name
     }
 }

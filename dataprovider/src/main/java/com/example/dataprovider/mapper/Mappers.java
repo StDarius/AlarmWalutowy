@@ -17,12 +17,7 @@ public final class Mappers {
     }
 
     public static RateTickDTO toDTO(RateTick t) {
-        return new RateTickDTO(
-                t.getBaseCurrency(),
-                t.getQuoteCurrency(),
-                BigDecimal.valueOf(t.getRate()),
-                t.getTimestamp()
-        );
+        return new RateTickDTO(t.getBaseCurrency(), t.getQuoteCurrency(), t.getRate(), t.getTimestamp());
     }
 }
 

@@ -1,77 +1,141 @@
-README – AlarmWalutowy v1.4
-🎯 Opis projektu
+# Alarm Walutowy — v1.4.1
 
-AlarmWalutowy to aplikacja, której celem jest monitorowanie kursów walut i powiadamianie użytkowników, gdy zmiana przekroczy zdefiniowany próg procentowy.
-Projekt łączy się z zewnętrznym API kursów walut, umożliwia zakładanie kont, subskrypcję wybranych par walutowych oraz wysyła powiadomienia e-mail.
+Aplikacja mikroserwisowa do monitorowania kursów walut i wysyłania powiadomień użytkownikom, gdy przekroczone zostaną zdefiniowane progi.  
+Projekt zrealizowany w ramach **finałowego projektu bootcampu Java (CodersLab)**.
 
-Od wersji 1.4 dodano role użytkowników (ROLE_USER, ROLE_ADMIN), co wprowadza prostą warstwę autoryzacji – np. różne poziomy dostępu do endpointów.
+---
 
-🛠 Technologie
+## ✨ Funkcjonalności
 
-Java 21, Spring Boot 3.3
+- **Zarządzanie użytkownikami**
+    - Rejestracja z adresem e-mail i hasłem
+    - Role systemowe (`ROLE_USER`)
+    - Uwierzytelnianie oparte o JWT
 
-Spring Security + JWT
+- **Subskrypcje**
+    - Użytkownik może zapisać się na pary walut (np. EUR/USD)
+    - Definiowanie progów procentowych zmian, które uruchamiają powiadomienia
 
-Spring Data JPA + H2 (dev), PostgreSQL (prod)
+- **Powiadomienia**
+    - E-maile wysyłane przy przekroczeniu progów
+    - Możliwość włączenia/wyłączenia powiadomień w konfiguracji
 
-Flyway (zarządzanie schematem bazy)
+- **Zbieranie danych**
+    - Pobieranie kursów walut z zewnętrznego dostawcy
+    - Publikacja zdarzeń kursowych (RateTick)
 
-MailHog (powiadomienia e-mail w dev)
+- **Dostawca danych**
+    - REST API dla użytkowników, uwierzytelniania, subskrypcji i alertów
+    - Integracja z Spring Security, JPA i Mail
+    - Mapowanie encji na DTO
 
-Lombok (redukcja boilerplate)
+---
 
-Docker (opcjonalnie)
+## 🏗️ Struktura projektu
 
-🚀 Funkcjonalności
+Projekt jest **wielomodułowy (Maven multi-module)**:
 
-Rejestracja i logowanie z JWT, walidacja danych
+- **currency-alert** – moduł nadrzędny (root)
+- **common** – wspólne DTO, mapery, klasy pomocnicze
+- **datagatherer** – pobiera kursy z zewnętrznych API i publikuje zdarzenia
+- **dataprovider** – warstwa REST API, uwierzytelnianie, subskrypcje, powiadomienia
 
-Subskrypcja wybranych walut z progami alertów
+---
 
-Powiadomienia mailowe (MailHog w dev)
+## ⚙️ Stos technologiczny
 
-Integracja z zewnętrznym API kursów walut
+- **Java 21 (LTS)**
+- **Spring Boot 3.3**
+    - Spring Web (REST API)
+    - Spring Security (JWT)
+    - Spring Data JPA (Hibernate + H2/MySQL)
+    - Spring Mail (JavaMailSender)
+- **Maven 3.9+**
+- **Lombok**
+- **JUnit 5** i **Mockito**
+- **H2** (testy/dev), **MySQL** (produkcja)
 
-Obsługa ról użytkowników:
+---
 
-ROLE_USER – dostęp do standardowych funkcji aplikacji
+## 🚀 Uruchomienie
 
-ROLE_ADMIN – potencjalny dostęp do funkcji administracyjnych
+### Wymagania
 
-📊 Priorytety funkcjonalności (MoSCoW) + Estymaty
-Kategoria	Funkcjonalność	Estymata (h)	Status v1.4
-M	Rejestracja i logowanie z JWT	8	✅ Gotowe
-M	Subskrypcje walut z progami alertów	12	✅ Gotowe
-M	Powiadomienia e-mail (MailHog w dev)	6	✅ Gotowe
-M	Integracja z zewnętrznym API (kursy walut)	10	✅ Gotowe
-M	Role użytkowników (USER/ADMIN)	8	✅ Gotowe
-S	Historia kursów walut + DTO	8	✅ Gotowe
-S	Panel statusu API (/api/status)	3	✅ Gotowe
-C	Dashboard w React/Thymeleaf	16	❌ Jeszcze nie
-W	Integracja z Google OAuth	-	❌ Nie w tej wersji
-W	Deploy na VPS z CI/CD	-	❌ Nie w tej wersji
-🔑 Zmiany w wersji 1.4
+- Zainstalowana JDK **21**
+- Maven **3.9+**
+- (opcjonalnie) serwer SMTP lub Mailtrap do testowania e-maili
 
-Dodano obsługę ról użytkowników (ROLE_USER, ROLE_ADMIN) w modelu i serwisach.
-
-Rozszerzono logikę rejestracji o przypisywanie domyślnej roli.
-
-Zaktualizowano dokumentację README o sekcję MoSCoW + Estymaty.
-
-📦 Uruchamianie
-Profil deweloperski
-
-Wymagane: Java 21, Maven, opcjonalnie Docker + MailHog
-
-Komenda:
-
-mvn spring-boot:run -pl dataprovider
+### Klonowanie i budowanie
+```bash
+git clone https://github.com/twoj-login/alarm-walutowy.git
+cd alarm-walutowy
+mvn clean package
+Uruchomienie lokalne
+W module dataprovider:
 
 
-Aplikacja dostępna pod adresem: http://localhost:8080
+mvn spring-boot:run
+Lub uruchom klasę DataProviderApplication w IntelliJ.
+API dostępne pod adresem:
+👉 http://localhost:8080/api
 
-Profil produkcyjny
+🔑 Przebieg autoryzacji
+Rejestracja
+POST /api/auth/register
+Przykładowe body:
 
-Wymagane: PostgreSQL + RabbitMQ
 
-Konfiguracja w application.yml (prod).
+{
+  "username": "jan",
+  "password": "tajne123",
+  "email": "jan@example.com"
+}
+Logowanie
+POST /api/auth/login
+Przykładowe body:
+
+
+{
+  "username": "jan",
+  "password": "tajne123"
+}
+Odpowiedź:
+
+
+{
+  "token": "<jwt-token>",
+  "user": { "id": 1, "username": "jan", "email": "jan@example.com" }
+}
+Token JWT należy przekazywać w nagłówku Authorization:
+
+
+Authorization: Bearer <jwt-token>
+📧 Powiadomienia e-mail
+Włączanie/wyłączanie: app.notifications.enabled (true/false)
+
+Nadawca: app.notifications.from
+
+Przykład (application.yml):
+
+
+app:
+  notifications:
+    enabled: true
+    from: no-reply@alarm-walutowy.local
+🧪 Testy
+Uruchomienie testów:
+
+
+mvn test
+Testy obejmują:
+
+jednostkowe (AuthService, UserService, NotificationService)
+
+integracyjne (API, rejestracja/logowanie)
+
+📄 Wersja
+Aktualne wydanie: 1.4.1
+
+👨‍💻 Autor
+Projekt stworzony w ramach bootcampu Java CodersLab
+Autor: Gabriel Stremecki

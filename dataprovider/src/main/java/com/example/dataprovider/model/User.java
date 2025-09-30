@@ -1,15 +1,36 @@
-
 package com.example.dataprovider.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Getter
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
 public class User {
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank
+    @Column(nullable = false, unique = true, length = 100)
+    private String username;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String passwordHash;
+
+    @Email
+    @Column(length = 200)
+    private String email;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -17,35 +38,8 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private java.util.Set<Role> roles = new java.util.HashSet<>();
+    private Set<Role> roles = new HashSet<>();
 
     public void addRole(Role role) { this.roles.add(role); }
-
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false, unique = true, length = 100)
-    @NotBlank
-    private String username;
-
-    @Column(nullable = false)
-    @NotBlank
-    private String passwordHash;
-
-    @Email
-    @Column(length = 200)
-    private String email;
-
-
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-    public String getPasswordHash() { return passwordHash; }
-    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
+    public void removeRole(Role role) { this.roles.remove(role); }
 }

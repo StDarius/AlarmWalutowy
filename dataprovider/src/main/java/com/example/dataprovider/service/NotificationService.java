@@ -22,6 +22,32 @@ public class NotificationService {
     @Value("${app.notifications.from:no-reply@alarm-walutowy.local}")
     private String from;
 
+    public void notifyUserRegistered(User user) {
+        if (!enabled) {
+            log.info("Notifications disabled; skip registration email to {}", user.getEmail());
+            return;
+        }
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            log.warn("User {} has no email; skip registration notification", user.getUsername());
+            return;
+        }
+
+        var subject = "Welcome to Alarm Walutowy";
+        var body = String.format(
+                "Hi %s,%n%nYour account has been created successfully.%n%n— Alarm Walutowy",
+                user.getUsername()
+        );
+
+        var msg = new SimpleMailMessage();
+        msg.setFrom(from);
+        msg.setTo(user.getEmail());
+        msg.setSubject(subject);
+        msg.setText(body);
+
+        mailSender.send(msg);
+        log.info("Registration email sent to {}", user.getEmail());
+    }
+
     public void notifyByEmail(User user, String subject, String body) {
         if (!enabled) {
             log.info("Notifications disabled; skip email to {}", user.getEmail());
@@ -32,7 +58,7 @@ public class NotificationService {
             return;
         }
 
-        SimpleMailMessage msg = new SimpleMailMessage();
+        var msg = new SimpleMailMessage();
         msg.setFrom(from);
         msg.setTo(user.getEmail());
         msg.setSubject(subject);
@@ -42,13 +68,15 @@ public class NotificationService {
         log.info("Sent custom email to {}", user.getEmail());
     }
 
-    public void sendThresholdExceeded(User user,
-                                      Subscription sub,   // can be null (debug endpoint)
-                                      String base,
-                                      String quote,
-                                      double oldRate,
-                                      double newRate,
-                                      double changePercent) {
+    public void sendThresholdExceeded(
+            User user,
+            Subscription sub,   // may be null (e.g., from debug endpoint)
+            String base,
+            String quote,
+            double oldRate,
+            double newRate,
+            double changePercent
+    ) {
         if (!enabled) {
             log.info("Notifications disabled; skip email to {}", user.getEmail());
             return;
@@ -58,12 +86,11 @@ public class NotificationService {
             return;
         }
 
-        // Null-safe access when called from DebugController
+        // Null-safe values if called without a real Subscription
         String subCurrency = (sub != null && sub.getCurrency() != null) ? sub.getCurrency() : quote;
-        double threshold =
-                (sub != null && sub.getThresholdPercent() != null)
-                        ? sub.getThresholdPercent().doubleValue()   // <— convert BigDecimal -> double
-                        : changePercent;
+        double threshold = (sub != null && sub.getThresholdPercent() != null)
+                ? sub.getThresholdPercent().doubleValue()
+                : changePercent;
 
         String subject = String.format("Currency Alert: %s/%s changed by %.2f%%", base, quote, changePercent);
         String body = String.format(
@@ -73,12 +100,12 @@ public class NotificationService {
                         "Old rate: %.6f%n" +
                         "New rate: %.6f%n" +
                         "Change: %.2f%%%n%n" +
-                        "-- Alarm Walutowy",
+                        "— Alarm Walutowy",
                 user.getUsername(), subCurrency, threshold,
                 base, quote, oldRate, newRate, changePercent
         );
 
-        SimpleMailMessage msg = new SimpleMailMessage();
+        var msg = new SimpleMailMessage();
         msg.setFrom(from);
         msg.setTo(user.getEmail());
         msg.setSubject(subject);
