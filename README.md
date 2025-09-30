@@ -1,123 +1,92 @@
-# Alarm Walutowy - wersja basic (ale działa)
+# 💱 Alarm Walutowy – System Powiadomień o Kursach Walut
 
-
-# Alarm Walutowy
-
-Projekt końcowy — aplikacja do monitorowania kursów walut i wysyłania powiadomień o ich zmianach.
+**Alarm Walutowy** to projekt oparty na **Spring Boot**, którego celem jest śledzenie kursów walut i powiadamianie użytkowników, gdy skonfigurowane progi zostaną przekroczone.  
+Projekt pokazuje integrację **bazy danych, systemu wiadomości, bezpieczeństwa oraz powiadomień mailowych** w modularnej aplikacji Java.
 
 ---
 
-## Architektura
+## 📌 Funkcjonalności
 
-System składa się z **dwóch mikroserwisów**:
-
-- **DataGatherer** (port `8081`)
-    - pobiera kursy walut z zewnętrznego API (lub z pliku `sample-openexchangerates.json` w trybie mock)
-    - wykrywa zmiany powyżej zadanego progu
-    - wysyła zdarzenia (JSON) do RabbitMQ
-
-- **DataProvider** (port `8080`)
-    - odbiera zdarzenia z RabbitMQ i zapisuje do bazy danych (Postgres)
-    - zarządza użytkownikami i subskrypcjami (rejestracja, logowanie, JWT)
-    - udostępnia REST API do historii kursów i subskrypcji
-
-
-
-## Wymagania
-
-- **Java 17** (lub wyższa)
-- **Maven 3.9+**
-- **Docker** + **Docker Compose**
-- IntelliJ IDEA (rekomendowane)
+- **Logowanie i autoryzacja JWT**
+- **CRUD dla Subskrypcji** (waluta + próg procentowy)
+- **Pobieranie aktualizacji kursów** (RabbitMQ lub pamięć in-memory w trybie dev)
+- **Historia kursów** (zapisywanie 50 ostatnich próbek)
+- **Monitorowanie progów**: uruchamianie alertów po przekroczeniu ustawionej wartości
+- **Powiadomienia mailowe (v1.2)** – obsługiwane przez [MailHog](https://github.com/mailhog/MailHog) w trybie deweloperskim
+- Dokumentacja API przez Swagger UI (`/swagger-ui.html`)
 
 ---
 
-## Uruchomienie środowiska
+## 🗂️ Moduły
 
-1. W katalogu głównym projektu uruchom:
+- `dataprovider` – REST API, baza danych, bezpieczeństwo, messaging, serwis powiadomień
+- `datagatherer` – symuluje pobieranie kursów walut i publikowanie zdarzeń
+- `common` – klasy wspólne (DTO, zdarzenia, konfiguracja)
 
-   ```bash
-   docker compose up -d
-Uruchomi to:
+---
 
-Postgres (localhost:5432, baza currencydb, user app, pass app)
+## ⚙️ Technologie
 
-RabbitMQ (localhost:5672 oraz UI na http://localhost:15672, login: guest, hasło: guest)
+- **Java 17**, **Spring Boot 3**
+- **Spring Data JPA + Flyway** (H2 w dev, PostgreSQL w prod)
+- **Spring Security + JWT**
+- **RabbitMQ** (opcjonalnie, wyłączone w dev)
+- **MailHog SMTP** (testowanie maili w dev)
+- **Maven**
+- **Swagger / OpenAPI**
 
-Sprawdź czy kontenery działają:
+---
 
-docker ps
-Uruchomienie aplikacji
-DataGatherer
+## 🚀 Uruchomienie w trybie dev
 
-cd datagatherer
-mvn spring-boot:run
+1. Uruchom **MailHog** (SMTP `1025`, panel pod `8025`):
 
-Swagger UI: http://localhost:8081/swagger-ui.html
+   docker run --rm -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
 
-DataProvider
+2.Uruchom aplikację (dataprovider):
 
-cd dataprovider
-mvn spring-boot:run
-Swagger UI: http://localhost:8080/swagger-ui.html
+mvn spring-boot:run -pl dataprovider
 
-Testy end-to-end
+3. Wejdź na:
 
+Swagger UI → http://localhost:8080/swagger-ui.html
+MailHog inbox → http://localhost:8025
 
-Rejestracja użytkownika
-W Swaggerze DataProvider (/api/auth/register) wywołaj:
+📧 Testowanie maili (v1.2)
+Dodano specjalny endpoint debugowy, który pozwala ręcznie wysłać przykładowy mail:
 
+POST /api/debug/mail
 
+Authorization: Bearer <twój_token>
+Efekt: wysyłane jest testowe powiadomienie o przekroczeniu progu.
+Mail pojawi się w MailHog UI.
 
-{
-"username": "test",
-"password": "test123",
-"email": "test@example.com"
-}
-Logowanie i pobranie tokenu JWT
-/api/auth/login → w odpowiedzi otrzymasz token.
-Kliknij przycisk Authorize w Swaggerze i wklej:
+🛠️ Profile aplikacji
 
-Bearer <twój_token>
+dev (domyślny):
 
-Dodanie subskrypcji
-/api/subscriptions (POST):
+Baza H2 (in-memory)
+Messaging w pamięci (bez RabbitMQ)
+Powiadomienia mailowe → MailHog
 
-{
-"currency": "EUR",
-"thresholdPercent": 0.5
-}
+prod:
 
-##Manualne wywołanie pobierania kursów
+PostgreSQL
+RabbitMQ
+Zewnętrzny serwer SMTP (konfigurowalny)
 
-W Swaggerze DataGatherer → POST /api/status/poll → 200 OK.
+📜 Changelog
+v1.0 – Szkielet aplikacji (dataprovider, datagatherer, common)
 
-DataGatherer pobierze kursy i opublikuje wiadomość do RabbitMQ.
+v1.1 – CRUD, JWT, Swagger UI, testy integracyjne
 
-DataProvider odbierze wiadomość i zapisze do tabeli rate_history.
+v1.2 – Powiadomienia mailowe z MailHog, NotificationService, endpoint debugowy do testów
 
-Sprawdzenie historii kursów
-/api/rates/USD/EUR/last50 → powinieneś zobaczyć ostatnie notowania.
+🧑‍💻 Kolejne kroki
+Dodanie DTO do zwracanych odpowiedzi API
 
-Sprawdzenie subskrypcji
-/api/subscriptions (GET) → zwróci listę aktywnych subskrypcji.
+Wdrożenie na VPS (Docker Compose)
 
-Struktura katalogów
-common/ — klasy współdzielone (np. RateUpdateMessage)
+Dodanie CI/CD (np. GitHub Actions)
 
-datagatherer/ — serwis pobierający kursy i publikujący zdarzenia
-
-dataprovider/ — serwis użytkowników, subskrypcji, historii i powiadomień
-
-docker-compose.yml — Postgres + RabbitMQ
-
-README.md — dokumentacja projektu
-
-Plan Rozbudowy
-
-
-Dodanie MailHog do Docker Compose, aby testować powiadomienia e-mail.
-
-Rozszerzenie NotificationService w DataProvider, by wysyłał e-maile do subskrybentów.
-
-Testy integracyjne (Testcontainers).
+Obsługa zewnętrznego SMTP w środowisku produkcyjnym

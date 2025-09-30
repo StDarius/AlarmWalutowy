@@ -1,7 +1,7 @@
 # =========================
 # DEFAULT PROFILE: dev
 # - H2 in-memory
-# - inMemory messaging (no RabbitMQ needed)
+# - inMemory messaging
 # - Mail -> MailHog on localhost:1025
 # =========================
 spring:
@@ -26,7 +26,7 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
-  # RabbitMQ is NOT used in dev because app.messaging.inMemory=true
+
   rabbitmq:
     host: localhost
     port: 5672

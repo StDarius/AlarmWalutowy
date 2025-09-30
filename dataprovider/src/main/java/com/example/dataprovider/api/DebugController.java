@@ -1,7 +1,6 @@
-// com.example.dataprovider.api.DebugController
+// src/main/java/com/example/dataprovider/api/DebugController.java
 package com.example.dataprovider.api;
 
-import com.example.dataprovider.model.User;
 import com.example.dataprovider.repo.UserRepository;
 import com.example.dataprovider.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,12 @@ public class DebugController {
     @PostMapping("/mail")
     public ResponseEntity<Void> sendMail(@AuthenticationPrincipal UserDetails principal) {
         var user = userRepo.findByUsername(principal.getUsername()).orElseThrow();
-        notificationService.sendTestEmail(user);
+
+        notificationService.sendThresholdExceeded(
+                user, /* sub = */ null,
+                "USD", "EUR",
+                3.80, 3.90, 2.63
+        );
         return ResponseEntity.ok().build();
     }
 }
