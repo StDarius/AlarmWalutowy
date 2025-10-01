@@ -8,11 +8,13 @@ spring:
   application:
     name: dataprovider
 
+
   datasource:
     url: jdbc:h2:mem:currencydb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
     driver-class-name: org.h2.Driver
     username: sa
     password:
+
 
   jpa:
     hibernate:
@@ -21,6 +23,15 @@ spring:
       hibernate:
         format_sql: true
     open-in-view: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      datasource:
+        url: jdbc:h2:mem:currencydb
+        username: sa
+        password:
 
   flyway:
     enabled: true
@@ -48,9 +59,8 @@ server:
 
 app:
   jwt:
-    # >= 256-bit Base64 secret (keep yours or rotate)
-    secret: ASNFZ4mrze8BI0VniavN7wEjRWeJq83vASNFZ4mrze8=
-    expirationMs: 7200000
+    secret: u8C3nJz3k1mJHj4aM2N0b5p7q9tX2y4z6A8C0E2G4I6K8M0O2Q4S6U8W0Y2==
+    expirationMs: 86400000
   messaging:
     inMemory: true
   notifications:
@@ -89,10 +99,10 @@ spring:
     password: guest
     listener:
       simple:
-        auto-startup: true      # start consumers in prod
+        auto-startup: true
 
   mail:
-    host: localhost             # change to real SMTP in prod if needed
+    host: localhost
     port: 1025
     properties:
       mail.smtp.auth: false
