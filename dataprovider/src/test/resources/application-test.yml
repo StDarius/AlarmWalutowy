@@ -1,5 +1,5 @@
 server:
-  port: 0  # random
+  port: 0
 
 spring:
   datasource:
@@ -28,8 +28,7 @@ app:
   messaging:
     inMemory: true
 
-# IMPORTANT: provide a >=256-bit secret (Base64) for JWT in tests
-# (change the property key to match your JwtService if needed)
+
 security:
   jwt:
     secret: dGhpc19pc19hX3ZlcnlfbG9uZ19hbmRfc2VjdXJlX2Jhc2U2NF9zZWNyZXRfc3RyaW5nXzI1Nl9iaXRzXzEyMw==

@@ -8,11 +8,8 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
-import java.util.Map;
 import java.util.function.Function;
 
 @Service
@@ -75,10 +72,9 @@ public class JwtService {
         try {
             keyBytes = Decoders.BASE64.decode(secret);
         } catch (IllegalArgumentException ignore) {
-            // secret is not Base64 → treat as plain text
             keyBytes = secret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         }
-        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
-        return key;
+
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }

@@ -25,7 +25,7 @@ class SubscriptionRepositoryTest {
         // given a user
         User u = new User();
         u.setUsername("repo_test_user");
-        u.setPasswordHash("x"); // hash not relevant for persistence test
+        u.setPasswordHash("x");
         u.setEmail("repo@test.local");
         userRepository.save(u);
 

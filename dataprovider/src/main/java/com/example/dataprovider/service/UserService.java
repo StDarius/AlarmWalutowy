@@ -9,10 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.dataprovider.model.Role;
-import com.example.dataprovider.model.User;
 import com.example.dataprovider.repo.RoleRepository;
-import com.example.dataprovider.repo.UserRepository;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Service
