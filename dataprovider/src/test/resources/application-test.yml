@@ -1,0 +1,35 @@
+server:
+  port: 0  # random
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:currencydb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.format_sql: true
+  flyway:
+    enabled: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        auto-startup: false   # don't start consumers during this test
+
+# Make the app use in-memory messaging code paths (no broker)
+app:
+  messaging:
+    inMemory: true
+
+# IMPORTANT: provide a >=256-bit secret (Base64) for JWT in tests
+# (change the property key to match your JwtService if needed)
+security:
+  jwt:
+    secret: dGhpc19pc19hX3ZlcnlfbG9uZ19hbmRfc2VjdXJlX2Jhc2U2NF9zZWNyZXRfc3RyaW5nXzI1Nl9iaXRzXzEyMw==

@@ -1,123 +1,162 @@
-# Alarm Walutowy - wersja basic (ale działa)
+# README – AlarmWalutowy v1.4.1 🎯
 
+## 📌 Opis projektu
 
-# Alarm Walutowy
+**AlarmWalutowy** to aplikacja służąca do monitorowania kursów walut i powiadamiania użytkowników, gdy zmiana przekroczy zdefiniowany próg procentowy.  
+System umożliwia:
+- zakładanie kont użytkowników i logowanie (JWT),
+- subskrypcję wybranych par walutowych,
+- wysyłkę powiadomień e-mail (MailHog w trybie dev),
+- zarządzanie dostępem przez role (`ROLE_USER`, `ROLE_ADMIN`).
 
-Projekt końcowy — aplikacja do monitorowania kursów walut i wysyłania powiadomień o ich zmianach.
-
----
-
-## Architektura
-
-System składa się z **dwóch mikroserwisów**:
-
-- **DataGatherer** (port `8081`)
-    - pobiera kursy walut z zewnętrznego API (lub z pliku `sample-openexchangerates.json` w trybie mock)
-    - wykrywa zmiany powyżej zadanego progu
-    - wysyła zdarzenia (JSON) do RabbitMQ
-
-- **DataProvider** (port `8080`)
-    - odbiera zdarzenia z RabbitMQ i zapisuje do bazy danych (Postgres)
-    - zarządza użytkownikami i subskrypcjami (rejestracja, logowanie, JWT)
-    - udostępnia REST API do historii kursów i subskrypcji
-
-
-
-## Wymagania
-
-- **Java 17** (lub wyższa)
-- **Maven 3.9+**
-- **Docker** + **Docker Compose**
-- IntelliJ IDEA (rekomendowane)
+### 🆕 Zmiany w wersji 1.4.1
+- Uporządkowano encje (`User`, `Role`, `RateTick`) i DTO (`RateTickDTO`, `UserDTO`, `SubscriptionDTO`).
+- Poprawiono **AuthService** i **AuthController** (czystsza obsługa JWT + logowanie).
+- Dodano logger (`@Slf4j`) w `NotificationService` i pełną obsługę MailHog.
+- Stabilniejsze mapowanie obiektów dzięki klasie `Mappers`.
+- README zaktualizowane o pełne instrukcje uruchamiania i integracji z MailHog.
 
 ---
 
-## Uruchomienie środowiska
+## 🛠 Technologie
 
-1. W katalogu głównym projektu uruchom:
+- **Java 21**, **Spring Boot 3.3**
+- **Spring Security + JWT**
+- **Spring Data JPA**
+    - H2 (dev/test)
+    - PostgreSQL (prod)
+- **Flyway** – migracje bazy
+- **MailHog** – testowe powiadomienia e-mail
+- **Lombok** – redukcja boilerplate
+- **Docker** (opcjonalnie, np. dla MailHog, bazy)
+- **JUnit 5 + Mockito** – testy jednostkowe/integracyjne
 
+---
+
+## 🚀 Funkcjonalności
+
+- Rejestracja i logowanie (JWT, walidacja danych).
+- Subskrypcja wybranych walut z progami alertów.
+- Powiadomienia e-mail (MailHog w dev).
+- Integracja z zewnętrznym API kursów walut.
+- Obsługa ról użytkowników:
+    - `ROLE_USER` – dostęp do standardowych funkcji aplikacji.
+    - `ROLE_ADMIN` – dostęp administracyjny (np. zarządzanie użytkownikami w przyszłych wersjach).
+
+---
+
+## 📊 Priorytety funkcjonalności (MoSCoW) + Estymaty
+
+| Kategoria | Funkcjonalność                            | Estymata (h) | Status v1.4.1 |
+|-----------|--------------------------------------------|--------------|---------------|
+| M         | Rejestracja i logowanie z JWT              | 8            | ✅ Gotowe     |
+| M         | Subskrypcje walut z progami alertów        | 12           | ✅ Gotowe     |
+| M         | Powiadomienia e-mail (MailHog w dev)       | 6            | ✅ Gotowe     |
+| M         | Integracja z zewnętrznym API (kursy walut) | 10           | ✅ Gotowe     |
+| M         | Role użytkowników (USER/ADMIN)             | 8            | ✅ Gotowe     |
+| S         | Historia kursów walut + DTO                | 8            | ✅ Gotowe     |
+| S         | Panel statusu API (`/api/status`)          | 3            | ✅ Gotowe     |
+| C         | Dashboard w React/Thymeleaf                | 16           | ❌ Jeszcze nie|
+| W         | Integracja z Google OAuth                  | -            | ❌ Nie w tej wersji |
+| W         | Deploy na VPS z CI/CD                      | -            | ❌ Nie w tej wersji |
+
+---
+
+## 📦 Uruchamianie
+
+### Profil deweloperski
+
+**Wymagane:**
+- Java 21
+- Maven
+- Docker (dla MailHog i bazy testowej, opcjonalnie)
+
+1. Uruchom MailHog:
    ```bash
-   docker compose up -d
-Uruchomi to:
+   docker run --rm -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
+SMTP: localhost:1025
 
-Postgres (localhost:5432, baza currencydb, user app, pass app)
+UI MailHog: 👉 http://localhost:8025
 
-RabbitMQ (localhost:5672 oraz UI na http://localhost:15672, login: guest, hasło: guest)
+Skonfiguruj aplikację (application.yml):
 
-Sprawdź czy kontenery działają:
+spring:
+mail:
+host: localhost
+port: 1025
+properties:
+mail:
+smtp:
+auth: false
+starttls:
+enable: false
 
-docker ps
-Uruchomienie aplikacji
-DataGatherer
-
-cd datagatherer
-mvn spring-boot:run
-
-Swagger UI: http://localhost:8081/swagger-ui.html
-
-DataProvider
-
-cd dataprovider
-mvn spring-boot:run
-Swagger UI: http://localhost:8080/swagger-ui.html
-
-Testy end-to-end
+app:
+notifications:
+enabled: true
+from: no-reply@alarm-walutowy.local
 
 
-Rejestracja użytkownika
-W Swaggerze DataProvider (/api/auth/register) wywołaj:
+Uruchom moduł dataprovider:
 
+mvn spring-boot:run -pl dataprovider
+Aplikacja dostępna pod adresem:
+👉 http://localhost:8080
+
+Profil produkcyjny
+Wymagane:
+
+PostgreSQL
+
+RabbitMQ (dla kolejek zdarzeń walutowych)
+
+Konfiguracja w application.yml (prod profile).
+
+Budowanie:
+
+mvn clean package -DskipTests
+🔑 API – przykłady
+Rejestracja
+POST /api/auth/register
 
 
 {
-"username": "test",
-"password": "test123",
-"email": "test@example.com"
+"username": "jan",
+"password": "tajne123",
+"email": "jan@example.com"
 }
-Logowanie i pobranie tokenu JWT
-/api/auth/login → w odpowiedzi otrzymasz token.
-Kliknij przycisk Authorize w Swaggerze i wklej:
+Logowanie
+POST /api/auth/login
 
-Bearer <twój_token>
-
-Dodanie subskrypcji
-/api/subscriptions (POST):
 
 {
-"currency": "EUR",
-"thresholdPercent": 0.5
+"username": "jan",
+"password": "tajne123"
+}
+Odpowiedź:
+
+
+{
+"token": "<jwt-token>",
+"user": { "id": 1, "username": "jan", "email": "jan@example.com" }
 }
 
-##Manualne wywołanie pobierania kursów
+JWT należy przekazywać w nagłówku:
 
-W Swaggerze DataGatherer → POST /api/status/poll → 200 OK.
+makefile
 
-DataGatherer pobierze kursy i opublikuje wiadomość do RabbitMQ.
+Authorization: Bearer <jwt-token>
+🧪 Testy
+Uruchamianie testów:
 
-DataProvider odbierze wiadomość i zapisze do tabeli rate_history.
+mvn test
 
-Sprawdzenie historii kursów
-/api/rates/USD/EUR/last50 → powinieneś zobaczyć ostatnie notowania.
+Testy jednostkowe (AuthService, UserService, NotificationService)
+Testy integracyjne (API rejestracji i logowania)
 
-Sprawdzenie subskrypcji
-/api/subscriptions (GET) → zwróci listę aktywnych subskrypcji.
+📄 Wersja
+Aktualne wydanie: 1.4.1
 
-Struktura katalogów
-common/ — klasy współdzielone (np. RateUpdateMessage)
-
-datagatherer/ — serwis pobierający kursy i publikujący zdarzenia
-
-dataprovider/ — serwis użytkowników, subskrypcji, historii i powiadomień
-
-docker-compose.yml — Postgres + RabbitMQ
-
-README.md — dokumentacja projektu
-
-Plan Rozbudowy
-
-
-Dodanie MailHog do Docker Compose, aby testować powiadomienia e-mail.
-
-Rozszerzenie NotificationService w DataProvider, by wysyłał e-maile do subskrybentów.
-
-Testy integracyjne (Testcontainers).
+👨‍💻 Autor
+Projekt stworzony w ramach bootcampu Java CodersLab
+Autor: Gabriel Stremecki

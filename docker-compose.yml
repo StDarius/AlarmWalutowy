@@ -1,5 +1,12 @@
 version: '3.9'
 services:
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
   postgres:
     image: postgres:15
     container_name: currency-postgres
@@ -17,7 +24,7 @@ services:
     container_name: currency-rabbit
     ports:
       - "5672:5672"
-      - "15672:15672" # RabbitMQ management UI
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest

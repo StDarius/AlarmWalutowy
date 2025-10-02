@@ -8,15 +8,25 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.example.dataprovider.model.Role;
+import com.example.dataprovider.model.User;
+import com.example.dataprovider.repo.RoleRepository;
+import com.example.dataprovider.repo.UserRepository;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Service
 public class UserService implements UserDetailsService {
 
+
     private final UserRepository repo;
+    private final RoleRepository roleRepo;
     private final PasswordEncoder encoder;
 
-    public UserService(UserRepository repo, PasswordEncoder encoder) {
+
+    public UserService(UserRepository repo, RoleRepository roleRepo, PasswordEncoder encoder) {
         this.repo = repo;
+        this.roleRepo = roleRepo;
         this.encoder = encoder;
     }
 
@@ -28,6 +38,12 @@ public class UserService implements UserDetailsService {
         u.setUsername(username);
         u.setPasswordHash(encoder.encode(rawPassword));
         u.setEmail(email);
+
+        // przypisz ROLE_USER z DB
+        Role userRole = roleRepo.findByName("ROLE_USER")
+                .orElseThrow(() -> new IllegalStateException("ROLE_USER not seeded"));
+        u.addRole(userRole);
+
         return repo.save(u);
     }
 
@@ -35,10 +51,15 @@ public class UserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User u = repo.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        var authorities = u.getRoles().stream()
+                .map(r -> new SimpleGrantedAuthority(r.getName())) // nazwa w formacie "ROLE_XYZ"
+                .toList();
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(u.getUsername())
                 .password(u.getPasswordHash())
-                .roles("USER")
+                .authorities(authorities)
                 .build();
     }
 }
