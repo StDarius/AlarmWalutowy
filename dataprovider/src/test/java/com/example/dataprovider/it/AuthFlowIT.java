@@ -51,13 +51,13 @@ class AuthFlowIT {
         assertThat(loginResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(loginResp.getBody()).isNotNull();
 
-        // token field name could be "token" or "accessToken" depending on your controller response
+        // Testing if token is generated
         Object tokenObj = loginResp.getBody().getOrDefault("token", loginResp.getBody().get("accessToken"));
         assertThat(tokenObj).isNotNull();
         String token = tokenObj.toString();
         assertThat(token).isNotBlank();
 
-        // 3) Call a protected endpoint (subscriptions list)
+        // 3) Call a subscription list
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         HttpEntity<Void> entity = new HttpEntity<>(headers);

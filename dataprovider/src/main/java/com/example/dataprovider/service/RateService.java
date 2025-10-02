@@ -43,7 +43,7 @@ public class RateService {
         rh.setTimestamp(ts);
         rateRepo.save(rh);
 
-        // Optional: trigger notifications here if you already compute changePercent
+
         if (changePercent != null) {
             List<Subscription> subs = subRepo.findByCurrencyIgnoreCase(quote);
             for (Subscription s : subs) {

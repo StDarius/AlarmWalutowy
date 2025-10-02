@@ -3,7 +3,6 @@ package com.example.dataprovider.mapper;
 import com.example.dataprovider.dto.*;
 import com.example.dataprovider.model.*;
 
-import java.math.BigDecimal;
 
 public final class Mappers {
     private Mappers() {}

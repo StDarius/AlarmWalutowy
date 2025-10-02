@@ -33,7 +33,7 @@ class UserServiceTest {
         when(passwordEncoder.encode("pw")).thenReturn("HASH");
 
         var role = new Role();
-        role.setName("ROLE_USER"); // <-- with prefix
+        role.setName("ROLE_USER");
 
         when(roleRepository.findByName("ROLE_USER"))
                 .thenReturn(Optional.of(role));
