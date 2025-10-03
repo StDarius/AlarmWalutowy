@@ -1,34 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: false
+
+  # don’t start Rabbit listeners in tests
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
+
+  mail:
+    host: localhost
+    port: 2525   # won’t be used because we’ll mock JavaMailSender
+
 server:
   port: 0
 
-spring:
-  datasource:
-    url: jdbc:h2:mem:currencydb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
-  jpa:
-    hibernate:
-      ddl-auto: none
-    properties:
-      hibernate.format_sql: true
-  flyway:
-    enabled: true
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-    listener:
-      simple:
-        auto-startup: false   # don't start consumers during this test
-
-# Make the app use in-memory messaging code paths (no broker)
 app:
+  jwt:
+    secret: test-test-test-test-test-test-test-test-test-test
   messaging:
     inMemory: true
-
-
-security:
-  jwt:
-    secret: dGhpc19pc19hX3ZlcnlfbG9uZ19hbmRfc2VjdXJlX2Jhc2U2NF9zZWNyZXRfc3RyaW5nXzI1Nl9iaXRzXzEyMw==

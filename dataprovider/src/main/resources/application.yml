@@ -1,79 +1,8 @@
-# =========================
-# DEFAULT PROFILE: dev
-# - H2 in-memory
-# - inMemory messaging
-# - Mail -> MailHog on localhost:1025
-# =========================
+# ========= PROD (PostgreSQL + RabbitMQ) =========
 spring:
   application:
     name: dataprovider
 
-
-  datasource:
-    url: jdbc:h2:mem:currencydb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-
-  jpa:
-    hibernate:
-      ddl-auto: none
-    properties:
-      hibernate:
-        format_sql: true
-    open-in-view: true
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-      datasource:
-        url: jdbc:h2:mem:currencydb
-        username: sa
-        password:
-
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-
-
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-    listener:
-      simple:
-        auto-startup: false
-
-  mail:
-    host: localhost
-    port: 1025                  # MailHog SMTP
-    properties:
-      mail.smtp.auth: false
-      mail.smtp.starttls.enable: false
-
-server:
-  port: 8080
-
-app:
-  jwt:
-    secret: u8C3nJz3k1mJHj4aM2N0b5p7q9tX2y4z6A8C0E2G4I6K8M0O2Q4S6U8W0Y2==
-    expirationMs: 86400000
-  messaging:
-    inMemory: true
-  notifications:
-    enabled: true               # allow sending emails in dev
-    from: no-reply@alarm-walutowy.local
-
----
-# =========================
-# PROD PROFILE
-# - Postgres + RabbitMQ
-# - Mail -> MailHog (or swap to real SMTP)
-# =========================
-spring:
   config:
     activate:
       on-profile: prod
@@ -83,14 +12,24 @@ spring:
     username: app
     password: app
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
 
   jpa:
     hibernate:
       ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
 
   flyway:
     enabled: true
     locations: classpath:db/migration
+    baseline-on-migrate: true   # useful if DB may already have tables
+    baseline-version: 0
+    clean-disabled: true
 
   rabbitmq:
     host: localhost
@@ -100,6 +39,7 @@ spring:
     listener:
       simple:
         auto-startup: true
+
 
   mail:
     host: localhost
@@ -117,3 +57,66 @@ app:
   notifications:
     enabled: true
     from: no-reply@alarm-walutowy.local
+  jwt:
+    secret: u8C3nJz3k1mJHj4aM2N0b5p7q9tX2y4z6A8C0E2G4I6K8M0O2Q4S6U8W0Y2==
+    expirationMs: 86400000
+
+# ========= DEV (H2 + MailHog) =========
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:h2:mem:currencydb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  flyway:
+    enabled: false
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        auto-startup: true
+
+  mail:
+    host: localhost
+    port: 1025
+    username:
+    password:
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+
+server:
+  port: 8080
+
+app:
+  messaging:
+    inMemory: false
+  notifications:
+    enabled: true
+    from: no-reply@alarm-walutowy.local
+  jwt:
+    secret: ${APP_JWT_SECRET:ZXlKaGJHY2lPaUpJVXpJMU5pSXNJbWxoZENJNk1UQXdNVGs1TURBMU5Dd2ljM1ZpSWpvMk1qTTJOVFk1TURFaWZRLQ==}
+    expiration-ms: 3600000   # 1 hour
+    issuer: dataprovider-dev
