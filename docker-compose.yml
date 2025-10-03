@@ -1,15 +1,7 @@
-version: '3.9'
 services:
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    container_name: mailhog
-    ports:
-      - "1025:1025"
-      - "8025:8025"
-
   postgres:
-    image: postgres:15
-    container_name: currency-postgres
+    image: postgres:16
+    container_name: ca_postgres
     environment:
       POSTGRES_DB: currencydb
       POSTGRES_USER: app
@@ -18,16 +10,93 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d currencydb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   rabbitmq:
-    image: rabbitmq:3-management
-    container_name: currency-rabbit
+    image: rabbitmq:3.13-management
+    container_name: ca_rabbit
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5672:5672"      # AMQP
+      - "15672:15672"    # mgmt UI http://localhost:15672 guest/guest
+    volumes:
+      - rmqdata:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: ca_mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # UI http://localhost:8025
+
+  dataprovider:
+    build:
+      context: .
+      dockerfile: dataprovider/Dockerfile
+    container_name: ca_dataprovider
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      # enforce prod
+      SPRING_PROFILES_ACTIVE: prod
+
+      # override JDBC to point at the container, not localhost
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/currencydb
+      SPRING_DATASOURCE_USERNAME: app
+      SPRING_DATASOURCE_PASSWORD: app
+
+      # RabbitMQ
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+
+      # Mail
+      SPRING_MAIL_HOST: mailhog
+      SPRING_MAIL_PORT: 1025
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "false"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "false"
+
+
+      # APP_JWT_SECRET:
+    ports:
+      - "8080:8080"
+
+  datagatherer:
+    build:
+      context: .
+      dockerfile: datagatherer/Dockerfile
+    container_name: ca_datagatherer
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      # Rabbit
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+
+      APP_EXTERNAL_BASE-URL: https://openexchangerates.org/api
+      OXR_APP_ID: "493ebc3234c247f2b4d87944a0734d12"
+      # Optional polling tuning
+      APP_POLL_PERIOD-MS: "60000"
+      APP_POLL_INITIAL-DELAY-MS: "3000"
+    ports:
+      - "8081:8081"
 
 volumes:
   pgdata:
+  rmqdata:
