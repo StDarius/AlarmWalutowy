@@ -1,162 +1,172 @@
-# README – AlarmWalutowy v1.4.1 🎯
+AlarmWalutowy v1.5 🎯
+📌 Opis
 
-## 📌 Opis projektu
+AlarmWalutowy monitoruje kursy walut i wysyła powiadomienia e-mail, gdy zmiana przekroczy zdefiniowany próg. System składa się z dwóch mikroserwisów:
 
-**AlarmWalutowy** to aplikacja służąca do monitorowania kursów walut i powiadamiania użytkowników, gdy zmiana przekroczy zdefiniowany próg procentowy.  
-System umożliwia:
-- zakładanie kont użytkowników i logowanie (JWT),
-- subskrypcję wybranych par walutowych,
-- wysyłkę powiadomień e-mail (MailHog w trybie dev),
-- zarządzanie dostępem przez role (`ROLE_USER`, `ROLE_ADMIN`).
+dataprovider – API dla użytkowników (rejestracja/logowanie JWT, subskrypcje, odczyt danych, wysyłka maili).
 
-### 🆕 Zmiany w wersji 1.4.1
-- Uporządkowano encje (`User`, `Role`, `RateTick`) i DTO (`RateTickDTO`, `UserDTO`, `SubscriptionDTO`).
-- Poprawiono **AuthService** i **AuthController** (czystsza obsługa JWT + logowanie).
-- Dodano logger (`@Slf4j`) w `NotificationService` i pełną obsługę MailHog.
-- Stabilniejsze mapowanie obiektów dzięki klasie `Mappers`.
-- README zaktualizowane o pełne instrukcje uruchamiania i integracji z MailHog.
+datagatherer – cyklicznie pobiera kursy i publikuje zdarzenia do RabbitMQ.
 
----
+Role: ROLE_USER, ROLE_ADMIN (seedowane przez Flyway).
+Powiadomienia: w dev korzystamy z MailHog.
 
-## 🛠 Technologie
+🆕 Co nowego w 1.5
 
-- **Java 21**, **Spring Boot 3.3**
-- **Spring Security + JWT**
-- **Spring Data JPA**
-    - H2 (dev/test)
-    - PostgreSQL (prod)
-- **Flyway** – migracje bazy
-- **MailHog** – testowe powiadomienia e-mail
-- **Lombok** – redukcja boilerplate
-- **Docker** (opcjonalnie, np. dla MailHog, bazy)
-- **JUnit 5 + Mockito** – testy jednostkowe/integracyjne
+Flyway: migracje dla roles, user_roles + seed ról i przypięcie ROLE_USER do istniejących kont.
 
----
+Stabilny build w Dockerze: multi-stage Dockerfile, obrazy startują jako bootowalne JAR-y.
 
-## 🚀 Funkcjonalności
+Spójna konfiguracja profilu prod (Docker Compose) i dev (lokalnie).
 
-- Rejestracja i logowanie (JWT, walidacja danych).
-- Subskrypcja wybranych walut z progami alertów.
-- Powiadomienia e-mail (MailHog w dev).
-- Integracja z zewnętrznym API kursów walut.
-- Obsługa ról użytkowników:
-    - `ROLE_USER` – dostęp do standardowych funkcji aplikacji.
-    - `ROLE_ADMIN` – dostęp administracyjny (np. zarządzanie użytkownikami w przyszłych wersjach).
+Swagger w dataprovider.
 
----
+Porządki w encjach/DTO (User, Role, RateTick, UserDTO, SubscriptionDTO, RateTickDTO), uproszczony AuthService/AuthController, logowanie w NotificationService, mapowania w Mappers.
 
-## 📊 Priorytety funkcjonalności (MoSCoW) + Estymaty
+🧱 Architektura
+datagatherer (8081) ──publikuje──▶ RabbitMQ ◀──subskrybuje── dataprovider (8080)
+│
+PostgreSQL (Flyway)
+│
+MailHog (SMTP)
 
-| Kategoria | Funkcjonalność                            | Estymata (h) | Status v1.4.1 |
-|-----------|--------------------------------------------|--------------|---------------|
-| M         | Rejestracja i logowanie z JWT              | 8            | ✅ Gotowe     |
-| M         | Subskrypcje walut z progami alertów        | 12           | ✅ Gotowe     |
-| M         | Powiadomienia e-mail (MailHog w dev)       | 6            | ✅ Gotowe     |
-| M         | Integracja z zewnętrznym API (kursy walut) | 10           | ✅ Gotowe     |
-| M         | Role użytkowników (USER/ADMIN)             | 8            | ✅ Gotowe     |
-| S         | Historia kursów walut + DTO                | 8            | ✅ Gotowe     |
-| S         | Panel statusu API (`/api/status`)          | 3            | ✅ Gotowe     |
-| C         | Dashboard w React/Thymeleaf                | 16           | ❌ Jeszcze nie|
-| W         | Integracja z Google OAuth                  | -            | ❌ Nie w tej wersji |
-| W         | Deploy na VPS z CI/CD                      | -            | ❌ Nie w tej wersji |
+🛠 Technologie
 
----
+Java 21, Spring Boot 3.3 • Spring Security (JWT) • Spring Data JPA • PostgreSQL • Flyway • RabbitMQ • MailHog • Docker/Compose • Lombok • JUnit 5/Mockito
 
-## 📦 Uruchamianie
+🚀 Uruchamianie
+1) Cały stos przez Docker Compose (rekomendowane)
 
-### Profil deweloperski
+W katalogu głównym repo:
 
-**Wymagane:**
-- Java 21
-- Maven
-- Docker (dla MailHog i bazy testowej, opcjonalnie)
+docker compose up -d --build
 
-1. Uruchom MailHog:
-   ```bash
-   docker run --rm -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
-SMTP: localhost:1025
 
-UI MailHog: 👉 http://localhost:8025
+Kontenery:
 
-Skonfiguruj aplikację (application.yml):
+Nazwa	Port hosta	Opis
+ca_dataprovider	8080	API (profil prod)
+ca_datagatherer	8081	Zbieranie kursów (profil prod)
+ca_postgres	5432	Postgres + Flyway
+ca_rabbit	5672 / 15672	RabbitMQ (AMQP / panel)
+ca_mailhog	1025 / 8025	SMTP / UI
+
+Dostępy:
+
+Swagger (dataprovider): http://localhost:8080/swagger-ui/index.html
+
+RabbitMQ UI: http://localhost:15672
+(guest/guest)
+
+MailHog UI: http://localhost:8025
+
+Compose uruchamia profile prod i spina serwisy z Postgres/RabbitMQ/MailHog. Flyway automatycznie tworzy schemat i seeduje role.
+
+2) Lokalny dev (sam dataprovider)
+
+Opcjonalnie odpal MailHog:
+
+docker run --rm -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
+
+
+Uruchom API:
+
+mvn spring-boot:run -pl dataprovider -Dspring-boot.run.profiles=dev
+
+
+W application-dev.yml (dataprovider) używamy H2 lub lokalnego Postgresa oraz:
 
 spring:
 mail:
 host: localhost
 port: 1025
-properties:
-mail:
-smtp:
-auth: false
-starttls:
-enable: false
+properties.mail.smtp.auth: false
+properties.mail.smtp.starttls.enable: false
+app.notifications.enabled: true
+app.notifications.from: no-reply@alarm-walutowy.local
 
-app:
-notifications:
-enabled: true
-from: no-reply@alarm-walutowy.local
+🗃️ Migracje (Flyway)
 
+Pliki: dataprovider/src/main/resources/db/migration
 
-Uruchom moduł dataprovider:
+Tabele: users, subscriptions, rate_history, roles, user_roles
 
-mvn spring-boot:run -pl dataprovider
-Aplikacja dostępna pod adresem:
-👉 http://localhost:8080
+Seed: ROLE_USER, ROLE_ADMIN + przypięcie ROLE_USER do istniejących users
 
-Profil produkcyjny
-Wymagane:
+Przydatne:
 
-PostgreSQL
+# historia Flyway
+docker exec -it ca_postgres psql -U postgres -d currency_alert \
+-c "select version, description, success from flyway_schema_history order by installed_rank;"
 
-RabbitMQ (dla kolejek zdarzeń walutowych)
+# role
+docker exec -it ca_postgres psql -U postgres -d currency_alert -c "select * from roles;"
 
-Konfiguracja w application.yml (prod profile).
+📚 Swagger & autoryzacja
 
-Budowanie:
+UI: /swagger-ui/index.html (tylko dataprovider)
 
-mvn clean package -DskipTests
-🔑 API – przykłady
-Rejestracja
-POST /api/auth/register
+JWT w nagłówku:
 
+Authorization: Bearer <jwt-token>
 
-{
-"username": "jan",
-"password": "tajne123",
-"email": "jan@example.com"
-}
-Logowanie
-POST /api/auth/login
+🔑 Przykłady API
+
+Rejestracja – POST /api/auth/register
+
+{ "username": "jan", "password": "tajne123", "email": "jan@example.com" }
 
 
-{
-"username": "jan",
-"password": "tajne123"
-}
-Odpowiedź:
+Logowanie – POST /api/auth/login
 
+{ "username": "jan", "password": "tajne123" }
+
+
+Odpowiedź
 
 {
 "token": "<jwt-token>",
 "user": { "id": 1, "username": "jan", "email": "jan@example.com" }
 }
 
-JWT należy przekazywać w nagłówku:
 
-makefile
+Subskrypcje:
+GET /api/subscriptions, POST /api/subscriptions, DELETE /api/subscriptions/{id}
 
-Authorization: Bearer <jwt-token>
+📊 Priorytety (MoSCoW) – release 1.5
+Kategoria	Funkcjonalność	Estymata (h)	Status w 1.5
+M	Rejestracja i logowanie z JWT	8	✅
+M	Subskrypcje walut z progami alertów	12	✅
+M	Powiadomienia e-mail (MailHog w dev)	6	✅
+M	Integracja z zewn. API kursów	10	✅
+M	Role użytkowników (USER/ADMIN) + migracje	8	✅
+S	Historia kursów + DTO	8	✅
+S	Panel statusu API (/api/status)	3	✅
+C	Dashboard web (React/Thymeleaf)	16	❌
+W	Google OAuth	-	❌
+W	Deploy na VPS z CI/CD	-	❌
 🧪 Testy
-Uruchamianie testów:
-
 mvn test
 
-Testy jednostkowe (AuthService, UserService, NotificationService)
-Testy integracyjne (API rejestracji i logowania)
+
+Jednostkowe: AuthService, UserService, NotificationService
+
+Integracyjne: flow rejestracja/logowanie
+
+🧰 Build ręczny (poza Dockerem)
+mvn -B -DskipTests -pl dataprovider -am clean package
+mvn -B -DskipTests -pl datagatherer -am clean package
+
+
+Uruchamianie:
+
+java -jar dataprovider/target/dataprovider-*.jar --spring.profiles.active=prod
+java -jar datagatherer/target/datagatherer-*.jar --spring.profiles.active=prod
 
 📄 Wersja
-Aktualne wydanie: 1.4.1
+
+Aktualne wydanie: 1.5
 
 👨‍💻 Autor
-Projekt stworzony w ramach bootcampu Java CodersLab
+
+Projekt w ramach bootcampu Java CodersLab
 Autor: Gabriel Stremecki
