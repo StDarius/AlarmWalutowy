@@ -10,11 +10,13 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping(value = "/api/auth", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -22,26 +24,26 @@ public class AuthController {
     private final JwtService jwtService;
     private final AuthService authService;
 
-    // Request payload for registration
     public static record RegisterRequest(
             @NotBlank String username,
             @NotBlank String password,
             @Email String email
     ) {}
 
-    @PostMapping("/register")
+    @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody RegisterRequest req) {
-        var u = userService.register(req.username(), req.password(), req.email());
-        var dto = new AuthResponseDTO(
-                jwtService.generateToken(u.getUsername()),
-                Mappers.toDTO(u)
+        var user = userService.register(req.username(), req.password(), req.email());
+
+        var body = new AuthResponseDTO(
+                jwtService.generateToken(user.getUsername()),
+                Mappers.toDTO(user)
         );
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
-    @PostMapping("/login")
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody AuthRequestDTO req) {
-        var dto = authService.login(req.username(), req.password());
-        return ResponseEntity.ok(dto);
+        var body = authService.login(req.username(), req.password());
+        return ResponseEntity.ok(body);
     }
 }

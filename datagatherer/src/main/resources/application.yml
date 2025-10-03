@@ -4,17 +4,20 @@ server:
 spring:
   application:
     name: datagatherer
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
 
 app:
   base: USD
   changeThresholdPercent: 0.0
-  provider:
-    mock: true
-  messaging:
-    inMemory: false
-  pollFixedRateMs: 5000  # poll every 5s
+  poll:
+    period-ms: 30000           # poll every 30s
+    initial-delay-ms: 3000
+
+  pairs: ["EUR/PLN","USD/PLN","GBP/PLN"]
+
+  external:
+    provider: oxr
+    base-url: "https://openexchangerates.org/api"
+    connectTimeoutMs: 2000
+    readTimeoutMs: 3000
+    oxr:
+      appId: "493ebc3234c247f2b4d87944a0734d12"   # <— hardcoded for local testing
